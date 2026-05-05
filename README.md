@@ -1,121 +1,170 @@
-# Fake Shop CI/CD Pipeline com Kubernetes e AWS
+# AWS EKS DevOps Pipeline
 
-Este projeto implementa uma aplicação web chamada Fake Shop, que é implantada em um cluster Kubernetes na AWS. A infraestrutura é provisionada e gerenciada via CI/CD utilizando GitHub Actions.
+A cloud-native CI/CD pipeline for deploying a web application on Amazon EKS using GitHub Actions, Docker, Terraform, Kubernetes, Prometheus, and Grafana.
 
-## Visão Geral do Projeto
+## Overview
 
-A Fake Shop é uma aplicação fictícia composta por:
+This project demonstrates a complete DevOps workflow for deploying a Flask-based web application and PostgreSQL database on AWS using Amazon EKS.
 
-- **Backend e banco de dados:**
-  - Um banco PostgreSQL que armazena dados da aplicação.
-  - Uma aplicação web desenvolvida com Flask.
+The infrastructure is provisioned with Terraform, while application build, push, and deployment steps are automated through GitHub Actions. The environment also includes observability with Prometheus and Grafana.
 
-- **Monitoramento:**
-  - Coleta de métricas do cluster e da aplicação usando Prometheus e Grafana.
+## Goals
 
-- **Pipeline CI/CD:**
-  - Constrói, envia e implanta a aplicação automaticamente no cluster Kubernetes.
+- Automate infrastructure provisioning on AWS with Terraform.
+- Build a reproducible CI/CD pipeline using GitHub Actions.
+- Deploy a containerized application to a Kubernetes cluster on Amazon EKS.
+- Expose the application with a Kubernetes LoadBalancer Service.
+- Collect metrics and improve observability with Prometheus and Grafana.
 
-## Estrutura do Projeto
+## Architecture
 
-### Kubernetes Manifests
+The solution is composed of:
 
-- **Banco de Dados PostgreSQL:**
-  - Um Deployment gerencia um pod rodando o PostgreSQL.
-  - Um Service expõe o banco na porta 5432.
+- **Backend and Database**
+  - Flask web application.
+  - PostgreSQL database deployed in Kubernetes.
+- **Containerization**
+  - Docker image built and pushed to Docker Hub.
+- **Infrastructure**
+  - AWS EKS cluster provisioned with Terraform.
+- **CI/CD**
+  - GitHub Actions workflow for build and deployment automation.
+- **Observability**
+  - Prometheus for metrics collection.
+  - Grafana for dashboards and visualization.
 
-- **Aplicação Fake Shop:**
-  - Um Deployment gerencia 4 réplicas da aplicação Flask.
-  - Anotações para coleta de métricas foram adicionadas para Prometheus.
-  - Um Service do tipo LoadBalancer expõe a aplicação.
+## Tech Stack
 
-### Pipeline CI/CD (main.yaml)
+- **Cloud:** AWS
+- **Container Orchestration:** Kubernetes, Amazon EKS
+- **CI/CD:** GitHub Actions
+- **IaC:** Terraform
+- **Containers:** Docker
+- **Registry:** Docker Hub
+- **Application:** Flask
+- **Database:** PostgreSQL
+- **Monitoring:** Prometheus, Grafana
 
-- **Etapa de CI:**
-  - O código é clonado do repositório.
-  - Uma imagem Docker da aplicação é construída e enviada para o Docker Hub.
+## Repository Structure
 
-- **Etapa de CD:**
-  - O cluster EKS é configurado com kubectl.
-  - Os manifestos do Kubernetes são aplicados.
-  - A imagem mais recente da aplicação é implantada.
+```bash
+.
+├── kubernetes/
+│   ├── postgres-deployment.yaml
+│   ├── postgres-service.yaml
+│   ├── app-deployment.yaml
+│   └── app-service.yaml
+├── terraform/
+│   └── main.tf
+├── .github/
+│   └── workflows/
+│       └── main.yaml
+└── README.md
+```
 
-## Infraestrutura como Código (IaC) com Terraform
+## Kubernetes Manifests
 
-Para automatizar o provisionamento do cluster Kubernetes na AWS, este projeto inclui um arquivo Terraform que cria um cluster EKS.
+### PostgreSQL
+- A Deployment manages the PostgreSQL pod.
+- A Service exposes PostgreSQL on port `5432`.
 
-### Estrutura do Terraform
+### Fake Shop Application
+- A Deployment runs 4 replicas of the Flask application.
+- Prometheus annotations are added for metrics collection.
+- A `LoadBalancer` Service exposes the application externally.
 
-- **Arquivo:**
-  - `main.tf`: Define o provedor AWS, configuração de rede, e cria o cluster EKS.
-  
+## CI/CD Pipeline
 
-### Etapas para Configuração
+The GitHub Actions workflow handles both CI and CD:
 
-1. Instale o Terraform em sua máquina local.
-2. Configure suas credenciais AWS com permissões para criar recursos (IAM, VPC, EKS, etc.).
-3. Execute os seguintes comandos:
+### CI Stage
+- Checks out the source code.
+- Builds the Docker image.
+- Pushes the image to Docker Hub.
 
-   ```bash
-   terraform init
-   terraform plan
-   terraform apply
+### CD Stage
+- Configures access to the EKS cluster with `kubectl`.
+- Applies the Kubernetes manifests.
+- Deploys the latest application image to the cluster.
 
-## Conectando ao Cluster EKS e Implantação
+## Infrastructure as Code
 
-Assim que o provisionamento for concluído, conecte-se ao cluster EKS com o seguinte comando:
+Terraform is used to provision the AWS infrastructure required for the project, including the EKS cluster.
 
-   ```bash
-      aws eks update-kubeconfig --region <sua-região> --name <nome-do-cluster>
-   ```
+### Main Terraform File
+- `main.tf`: Defines the AWS provider, networking configuration, and EKS cluster resources.
 
-## Implantação e Configuração
+### Deployment Steps
+```bash
+terraform init
+terraform plan
+terraform apply
+```
 
-1. **Implante os manifestos do Kubernetes no cluster.**
+## Accessing the Cluster
 
-   ```bash
-   kubectl apply -f <caminho-dos-manifestos>
-   ```
+After provisioning, update your kubeconfig:
 
-### Configuração e Execução
+```bash
+aws eks update-kubeconfig --region <your-region> --name <cluster-name>
+```
 
-#### Pré-requisitos
+Then deploy the manifests:
 
-- **Docker Hub:** Configurar as credenciais no GitHub Secrets:
+```bash
+kubectl apply -f <path-to-manifests>
+```
 
-  ```plaintext
-  DOCKERHUB_USERNAME: <seu-usuário>
-  DOCKERHUB_TOKEN: <seu-token>
-  ```
+## Configuration
 
-- **AWS EKS:** Criar um cluster EKS e configurar credenciais:
+### Prerequisites
 
-  ```plaintext
-  AWS_ACCESS_KEY_ID: <sua-access-key>
-  AWS_SECRET_ACCESS_KEY: <sua-secret-key>
-  AWS_SECRET_REGION: <sua-região>
-  ```
+#### Docker Hub Secrets
+Configure the following secrets in GitHub:
 
-- **GitHub Actions:** Certifique-se de que as permissões do repositório estejam habilitadas para CI/CD.
+- `DOCKERHUB_USERNAME`
+- `DOCKERHUB_TOKEN`
 
-### Deploy na AWS
+#### AWS Secrets
+Configure the following secrets in GitHub:
 
-1. Garanta que seu cluster EKS esteja ativo e configurado.
-2. Faça push para o branch main para acionar o pipeline CI/CD:
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+- `AWS_SECRET_REGION`
 
-   ```bash
-   git add .
-   git commit -m "Atualizando projeto"
-   git push origin main
-   ```
+### GitHub Actions
+Make sure repository actions permissions are enabled to allow CI/CD execution.
 
-3. Acompanhe a execução no GitHub Actions.
+## Deployment on AWS
 
-## Melhorias Futuras
+To trigger the pipeline:
 
-- Implementação de um sistema de mensagens para registrar eventos.
-- Configuração de mais dashboards personalizados no Grafana.
+```bash
+git add .
+git commit -m "Update project"
+git push origin main
+```
 
+Then monitor the workflow execution in GitHub Actions.
 
+## Future Improvements
 
+- Add a message/event logging system.
+- Create more custom Grafana dashboards.
+- Add ingress with HTTPS using AWS Load Balancer Controller or NGINX Ingress.
+- Add autoscaling for application and cluster workloads.
 
+## What This Project Demonstrates
+
+This project highlights practical experience with:
+
+- AWS and EKS
+- Terraform-based infrastructure provisioning
+- GitHub Actions CI/CD pipelines
+- Kubernetes deployments and services
+- Docker image automation
+- Monitoring and observability with Prometheus and Grafana
+
+## Notes
+
+This repository was built as a DevOps bootcamp project and later refined as part of a cloud and DevOps portfolio.
