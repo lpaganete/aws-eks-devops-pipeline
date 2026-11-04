@@ -85,17 +85,15 @@ cd terraform && terraform destroy
 ![Dashboard da aplicação](grafana/Dashboard_fakeshop.png)
 ![Dashboard do cluster Kubernetes](grafana/Dashboard_kubernetes.png)
 
-## Decisões e problemas encontrados
+## Escolhas deste projeto e o que eu mudaria
 
-<!-- Escreva com as suas palavras, 1 a 3 linhas cada. Exemplos do tipo de coisa que vale contar:
-- Por que Service LoadBalancer e não Ingress nesta versão.
-- Por que Prometheus via annotations em vez de ServiceMonitor.
-- Algum erro real que você pegou: permissão IAM do pipeline, kubeconfig no runner,
-  imagem que não subia, métrica que não aparecia no Prometheus... e como resolveu.
--->
-
-- 
-- 
+| Escolha | Por que funciona aqui | Em produção eu faria |
+| --- | --- | --- |
+| Docker Hub como registry | Simples de integrar ao GitHub Actions | Amazon ECR, com acesso por IAM e sem credencial extra |
+| Service do tipo LoadBalancer | Expõe a aplicação direto, sem componente adicional | Ingress com um único balanceador para vários serviços e HTTPS |
+| Prometheus por annotations nos pods | Descoberta automática dos alvos, sem instalar operator | kube-prometheus-stack com ServiceMonitor |
+| Access key da AWS em secrets do GitHub | Configuração rápida do pipeline | OIDC entre GitHub e AWS, sem chave estática |
+| PostgreSQL dentro do cluster | Ambiente completo com um único `kubectl apply` | Amazon RDS, com backup e alta disponibilidade gerenciados |
 
 ## Próximos passos
 
